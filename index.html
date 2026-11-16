@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Conecta Catador</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, sans-serif; }
+    body { background: #f1f5f9; color: #0f172a; padding-bottom: 40px; }
+    header { background: #15803d; color: white; padding: 24px 20px; }
+    .top { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+    .stats { display: flex; gap: 10px; }
+    .stat { background: rgba(255,255,255,0.15); padding: 8px 14px; border-radius: 8px; text-align: center; }
+    .stat span { display: block; font-size: 1.3rem; font-weight: bold; }
+    .container { max-width: 1100px; margin: 24px auto; padding: 0 20px; display: grid; grid-template-columns: 340px 1fr; gap: 24px; }
+    @media (max-width: 800px) { .container { grid-template-columns: 1fr; } }
+    .panel { background: white; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0; }
+    .panel h2 { font-size: 1.1rem; margin-bottom: 15px; }
+    .field { margin-bottom: 12px; }
+    label { display: block; font-size: 0.85rem; color: #64748b; margin-bottom: 4px; }
+    input, select { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    .btn { width: 100%; padding: 11px; border: none; border-radius: 8px; background: #15803d; color: white; font-weight: 600; cursor: pointer; }
+    .btn:hover { background: #166534; }
+    .filters { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filters input { flex: 1; min-width: 180px; }
+    .tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 8px; }
+    .tab { border: none; background: transparent; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; }
+    .tab.active { background: white; color: #15803d; font-weight: bold; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .card { border: 1px solid #e2e8f0; border-left: 4px solid #f59e0b; border-radius: 10px; padding: 15px; display: flex; flex-direction: column; gap: 8px; }
+    .card.aceito { border-left-color: #15803d; }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .badge { font-size: 0.75rem; padding: 3px 8px; border-radius: 99px; font-weight: 600; background: #fef3c7; color: #b45309; }
+    .card.aceito .badge { background: #dcfce7; color: #15803d; }
+    .done-box { background: #f0fdf4; padding: 8px; border-radius: 6px; font-size: 0.85rem; color: #166534; }
+    .done-box a { color: #15803d; font-weight: bold; text-decoration: none; display: inline-block; margin-top: 4px; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; padding: 16px; }
+    .modal-bg.open { display: flex; }
+    .modal { background: white; padding: 20px; border-radius: 12px; width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; }
+    .modal-btns { display: flex; gap: 8px; }
+    .btn-sec { background: #e2e8f0; color: #334155; }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="top">
+      <div><h1>♻️ Conecta Catador</h1><p>Conectando moradores e coletores</p></div>
+      <div class="stats">
+        <div class="stat"><span id="st-total">0</span><small>Total</small></div>
+        <div class="stat"><span id="st-disp">0</span><small>Disponíveis</small></div>
+        <div class="stat"><span id="st-aceito">0</span><small>Aceitos</small></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="panel">
+      <h2>📦 Cadastrar Descarte</h2>
+      <form id="form-cad">
+        <div class="field"><label>Nome</label><input id="nome" required></div>
+        <div class="field"><label>WhatsApp</label><input id="tel" required></div>
+        <div class="field"><label>Bairro</label><input id="bairro" required></div>
+        <div class="field"><label>Material</label>
+          <select id="mat" required>
+            <option value="Papelão / Papel">Papelão / Papel</option>
+            <option value="Garrafas PET">Garrafas PET</option>
+            <option value="Latinhas / Alumínio">Latinhas / Alumínio</option>
+            <option value="Vidro">Vidro</option>
+            <option value="Óleo de Cozinha">Óleo de Cozinha</option>
+          </select>
+        </div>
+        <div class="field"><label>Quantidade</label><input id="qtd" placeholder="Ex: 2 sacos" required></div>
+        <button class="btn" type="submit">Publicar Descarte</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <h2>📋 Descartes Disponíveis</h2>
+      <div class="filters">
+        <input id="filtro" placeholder="🔍 Filtrar por bairro...">
+        <div class="tabs">
+          <button class="tab active" data-st="TODOS">Todos</button>
+          <button class="tab" data-st="DISPONIVEL">Disponíveis</button>
+          <button class="tab" data-st="ACEITO">Aceitos</button>
+        </div>
+      </div>
+      <div id="lista" class="grid"></div>
+    </section>
+  </main>
+
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <h3>🤝 Aceitar Coleta</h3>
+      <input id="coletor" placeholder="Seu nome (Coletor)">
+      <div class="modal-btns">
+        <button class="btn btn-sec" type="button" id="cancelar">Cancelar</button>
+        <button class="btn" type="button" id="confirmar">Confirmar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let itens = JSON.parse(localStorage.getItem('cc_v4')) || [
+      { id: 1, nome: "Maria Silva", tel: "11988881111", bairro: "Centro", mat: "Papelão / Papel", qtd: "3 caixas", status: "DISPONIVEL", coletor: "" },
+      { id: 2, nome: "João Santos", tel: "11977772222", bairro: "Pinheiros", mat: "Garrafas PET", qtd: "2 sacos", status: "DISPONIVEL", coletor: "" }
+    ];
+    let stFiltro = 'TODOS', idAtual = null;
+
+    function render() {
+      const f = document.getElementById('filtro').value.toLowerCase();
+      const box = document.getElementById('lista');
+      box.innerHTML = '';
+      document.getElementById('st-total').textContent = itens.length;
+      document.getElementById('st-disp').textContent = itens.filter(i => i.status === 'DISPONIVEL').length;
+      document.getElementById('st-aceito').textContent = itens.filter(i => i.status === 'ACEITO').length;
+
+      itens.filter(i => i.bairro.toLowerCase().includes(f) && (stFiltro === 'TODOS' || i.status === stFiltro)).forEach(i => {
+        const ok = i.status === 'ACEITO';
+        const zap = `https://wa.me{i.tel.replace(/\D/g,'')}?text=${encodeURIComponent('Olá ' + i.nome + ', aceitei sua coleta no Conecta Catador!')}`;
+        box.innerHTML += `<div class="card ${ok ? 'aceito' : ''}">
+          <div class="card-top"><strong>${i.mat} (${i.qtd})</strong><span class="badge">${ok ? 'Aceito' : 'Disponível'}</span></div>
+          <div>📍 ${i.bairro}<br>👤 ${i.nome} • 📞 ${i.tel}</div>
+          ${!ok ? `<button class="btn" onclick="abrir(${i.id})">🤝 Aceitar Coleta</button>` : `<div class="done-box">✅ Coletor: <b>${i.coletor}</b><br><a href="${zap}" target="_blank">💬 Chamar no WhatsApp</a></div>`}
+        </div>`;
+      });
+      localStorage.setItem('cc_v4', JSON.stringify(itens));
+    }
+
+    document.getElementById('form-cad').onsubmit = e => {
+      e.preventDefault();
+      itens.unshift({ id: Date.now(), nome: nome.value, tel: tel.value, bairro: bairro.value, mat: mat.value, qtd: qtd.value, status: 'DISPONIVEL', coletor: '' });
+      e.target.reset(); render();
+    };
+    document.getElementById('filtro').oninput = render;
+    document.querySelectorAll('.tab').forEach(b => b.onclick = () => {
+      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      b.classList.add('active'); stFiltro = b.dataset.st; render();
+    });
+    window.abrir = id => { idAtual = id; coletor.value = ''; modal.classList.add('open'); };
+    cancelar.onclick = () => modal.classList.remove('open');
+    confirmar.onclick = () => {
+      if (!coletor.value.trim()) return;
+      const it = itens.find(i => i.id === idAtual);
+      if (it) { it.status = 'ACEITO'; it.coletor = coletor.value.trim(); }
+      modal.classList.remove('open'); render();
+    };
+    render();
+  </script>
+</body>
+</html>
